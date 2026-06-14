@@ -49,8 +49,41 @@ export default function Home() {
     // TODO: 다음 단계에서 5초 광고 팝업 띄우기 로직을 여기에 조립할 거야!
   };
 
+  const handleDownload = () => {
+    if (!resultImage) return;
+    const link = document.createElement('a');
+    link.href = resultImage;
+    link.download = 'stadium_card.png';
+    link.click();
+  };
+
+  const handleCopyImage = async () => {
+    if (!resultImage) return;
+    try {
+      await navigator.clipboard.writeText(resultImage);
+      alert("이미지가 클립보드에 복사되었습니다.");
+    } catch (err) {
+      console.error('클립보드 쓰기 오류: ', err);
+    }
+  };
+
+  const handleLinkShare = async () => {
+    if (!resultImage) return;
+    try {
+      await navigator.share({
+        title: "Look at Yourself on the World Cup Stadium Screen!",
+        text: "Check out this amazing stadium card I made with AI!",
+        url: resultImage,
+      });
+    } catch (err) {
+      console.error('공유 오류: ', err);
+      // Fallback to clipboard if share fails
+      await navigator.clipboard.writeText(resultImage);
+      alert("이미지 URL이 클립보드에 복사되었습니다.");
+    }
+  };
+
   return (
-      // 배경을 딥한 스타디움 다크 테마(bg-zinc-950)로 변경하여 몰입감 업그레이드!
       <div className="flex flex-col flex-1 min-h-screen items-center justify-center bg-zinc-950 font-sans text-white">
         <main
             className="flex flex-1 w-full max-w-3xl flex-col items-center justify-center py-20 px-8 bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl"
@@ -59,12 +92,10 @@ export default function Home() {
             onDrop={handleDrop}
         >
           <div className="flex flex-col items-center gap-8 text-center w-full">
-            {/* 📺 타이틀을 실제 월드컵 라이브 방송 스코어보드 느낌으로 튜닝! */}
             <h1 className="max-w-xl text-3xl font-extrabold leading-10 tracking-tight text-lime-400">
               📺 LIVE: Look at Yourself on the World Cup Stadium Screen!
             </h1>
 
-            {/* 🌍 16개국 주요 축구 강국과 국기 이모지 추가 및 세련된 셀렉트 박스 */}
             <div className="w-full max-w-lg text-left">
               <label className="block text-xs font-bold uppercase tracking-wider text-zinc-400 mb-2">
                 🏆 Select Your Team
@@ -87,52 +118,36 @@ export default function Home() {
                 <option value="Italy">Italy 🇮🇹</option>
                 <option value="Croatia">Croatia 🇭🇷</option>
                 <option value="Morocco">Morocco 🇲🇦</option>
-                <option value="USA">USA 🇺🇸</option>
-                <option value="Mexico">Mexico 🇲🇽</option>
-                <option value="Uruguay">Uruguay 🇺🇾</option>
               </select>
             </div>
 
-            {/* ⚽ 드롭존 영역: 위트 넘치는 카피라이팅과 네온 라임 보더 테두리 */}
-            {imageSrc ? (
-                <div className="relative w-full max-w-lg group">
-                  <img
-                      src={imageSrc}
-                      alt="Uploaded Image"
-                      className="w-full h-auto object-contain rounded-lg border-2 border-lime-400 shadow-lg shadow-lime-500/10"
-                  />
+            {imageSrc && (
+              <>
+                <button
+                  onClick={handleDownload}
+                  className="w-full max-w-lg h-14 rounded-xl font-black text-base tracking-wide transition-all shadow-lg bg-lime-400 text-black hover:bg-lime-300 shadow-lime-400/20 active:scale-[0.99]"
+                >
+                  📥 Download Stadium Card
+                </button>
+
+                <div className="grid grid-cols-2 gap-3">
                   <button
-                      onClick={() => setImageSrc(null)}
-                      className="absolute top-3 right-3 bg-red-600 hover:bg-red-700 text-white text-xs font-bold px-3 py-1.5 rounded-full transition-colors shadow"
+                    onClick={handleCopyImage}
+                    className="w-full h-14 rounded-xl font-black text-base tracking-wide transition-all shadow-lg bg-zinc-800 text-zinc-500 hover:bg-zinc-700 hover:text-white"
                   >
-                    🏃‍♂️ delete picture
+                    📋 Copy Image
+                  </button>
+                  <button
+                    onClick={handleLinkShare}
+                    className="w-full h-14 rounded-xl font-black text-base tracking-wide transition-all shadow-lg bg-zinc-800 text-zinc-500 hover:bg-zinc-700 hover:text-white"
+                  >
+                    🔗 Pass Link to Friends
                   </button>
                 </div>
-            ) : (
-                <label
-                    className="flex flex-col items-center justify-center w-full max-w-lg p-12 bg-zinc-850 border-2 border-dashed border-lime-400/40 rounded-xl cursor-pointer hover:bg-zinc-800 hover:border-lime-400 transition-all group"
-                >
-                  <span className="text-4xl mb-3 group-hover:animate-bounce">⚽</span>
-                  <p className="text-lg font-bold text-zinc-100">Be a Soccer Star!</p>
-                  <p className="text-sm text-zinc-400 mt-1">
-                    Pass (Drop) your photo here or click to substitute player.
-                  </p>
-                  <input type="file" onChange={handleFileInput} hidden />
-                </label>
+              </>
             )}
 
-            {/* 🚀 다음 조각(광고 연동)을 스무스하게 붙이기 위한 작동 버튼 */}
-            <button
-                onClick={handleActivateCamera}
-                disabled={!imageSrc}
-                className={`w-full max-w-lg h-14 rounded-xl font-black text-base tracking-wide transition-all shadow-lg ${
-                    imageSrc
-                        ? "bg-lime-400 text-black hover:bg-lime-300 shadow-lime-400/20 active:scale-[0.99]"
-                        : "bg-zinc-800 text-zinc-500 cursor-not-allowed"
-                }`}
-            >
-              🚀 ACTIVATE STADIUM CAM
-            </button>
+            {showAd && <div>Ad Modal Content...</div>}
           </div>
         </main>
       </div>
