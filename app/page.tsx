@@ -149,7 +149,7 @@ export default function Home() {
     if (countryData) {
       setResultImage(countryData.mockJersey);
     } else {
-      setResultImage("https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=800&auto=format&fit=crop");
+      setResultImage("https://images.unsplash.com/photo-1508096682722-e99c43a406b2?w=800&auto=format&fit=crop");
     }
   };
 
@@ -166,7 +166,6 @@ export default function Home() {
     link.click();
   };
 
-  // 📋 [패치 완료] 진짜 이미지 파일 데이터를 직접 클립보드에 바인딩 (서버리스 최적화)
   const handleCopyImage = async () => {
     if (!resultImage) return;
     try {
@@ -177,7 +176,6 @@ export default function Home() {
       alert("Stadium card image copied directly to clipboard! Paste it into your chat (Ctrl+V)! 🎨⚽");
     } catch (err) {
       console.error('Clipboard image write error: ', err);
-      // Fallback
       try {
         await navigator.clipboard.writeText(resultImage);
         alert("Image URL copied to clipboard! 📋");
@@ -214,8 +212,9 @@ export default function Home() {
             strategy="afterInteractive"
         />
 
+        {/* ⚽ Main Application Section */}
         <main
-            className="flex flex-1 w-full max-w-3xl flex-col items-center justify-center py-20 px-8 bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl"
+            className="flex w-full max-w-3xl flex-col items-center justify-center py-20 px-8 bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl mt-12"
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
@@ -323,6 +322,50 @@ export default function Home() {
           )}
         </main>
 
+        {/* 📚 [AdSense Approval Booster] English Footer Content & Link Section */}
+        <footer className="w-full max-w-3xl mt-16 mb-12 p-8 border-t border-zinc-800 text-zinc-400">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+
+            {/* Left Area: Explanatory text optimized for AdSense indexer bots */}
+            <div>
+              <h3 className="text-base font-bold text-lime-400 mb-3">AI Soccer Jumbotron Simulator</h3>
+              <p className="text-xs leading-relaxed text-zinc-500">
+                Experience the dynamic energy of world-class football matches with your personal photos! This simulator utilizes an advanced web application framework to seamlessly render customized stadium graphics matching jerseys from major football nations including South Korea, Brazil, France, and Argentina.
+              </p>
+              <p className="text-xs leading-relaxed text-zinc-500 mt-2">
+                All uploaded user photos are processed instantly in runtime memory solely for graphic composition and are never permanently stored or logs collected on our infrastructure. Feel free to download your stadium card or copy it directly to your clipboard to share with online global football fan communities.
+              </p>
+            </div>
+
+            {/* Right Area: Navigation to blog posts and legal compliance guidelines */}
+            <div>
+              <h3 className="text-base font-bold text-white mb-3">Football Insights & Support</h3>
+              <ul className="space-y-3 text-xs">
+                <li>
+                  <a href="/blog" className="text-lime-400 hover:underline font-semibold flex items-center gap-1">
+                    <span>📚</span> Football Story Blog (Jersey History & Guides)
+                  </a>
+                </li>
+                <li>
+                  <a href="/privacy" className="hover:text-zinc-300 transition-colors flex items-center gap-1">
+                    <span>🔒</span> Privacy Policy
+                  </a>
+                </li>
+                <li>
+                  <a href="/terms" className="hover:text-zinc-300 transition-colors flex items-center gap-1">
+                    <span>📜</span> Terms of Service
+                  </a>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <div className="text-center text-[11px] text-zinc-600 border-t border-zinc-900 pt-6">
+            © 2026 AI Stadium Cam. All rights reserved. This website strictly adheres to the Google AdSense Program Policies.
+          </div>
+        </footer>
+
+        {/* Interstitial Ad / Buffer Screen */}
         {showAd && (
             <div className="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center z-50 animate-fade-in">
               <div className="bg-zinc-900 border-2 border-zinc-800 rounded-2xl p-8 max-w-md w-full mx-4 text-center shadow-2xl relative overflow-hidden">
