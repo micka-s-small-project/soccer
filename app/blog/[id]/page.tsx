@@ -8,27 +8,29 @@ interface Props {
   params: Promise<{ id: string }>;
 }
 
+// app/blog/[id]/page.tsx 내부의 renderMarkdown 함수를 아래처럼 업데이트하세요!
 function renderMarkdown(content: string) {
   return content.split("\n").map((line, index) => {
     const trimmed = line.trim();
     if (!trimmed) return <div key={index} className="h-4" />;
 
+    // 🎯 마크다운 이미지 태그 파싱 추가
+    if (trimmed.startsWith("![") && trimmed.includes("](") && trimmed.endsWith(")")) {
+      const url = trimmed.substring(trimmed.indexOf("(") + 1, trimmed.length - 1);
+      const alt = trimmed.substring(trimmed.indexOf("[") + 2, trimmed.indexOf("]"));
+      return (
+          <div key={index} className="my-6 rounded-xl overflow-hidden border border-zinc-800 shadow-md">
+            <img src={url} alt={alt} className="w-full h-auto object-cover max-h-[400px]" />
+          </div>
+      );
+    }
+
     if (trimmed.startsWith("###")) {
-      return (
-          <h3 key={index} className="text-xl font-bold text-white mt-8 mb-3 tracking-tight">
-            {trimmed.replace("###", "").trim()}
-          </h3>
-      );
+      return <h3 key={index} className="text-xl font-bold text-white mt-8 mb-3 tracking-tight">{trimmed.replace("###", "").trim()}</h3>;
     }
-
     if (trimmed.startsWith("*")) {
-      return (
-          <li key={index} className="ml-5 list-disc text-zinc-400 mb-2">
-            {trimmed.replace("*", "").trim()}
-          </li>
-      );
+      return <li key={index} className="ml-5 list-disc text-zinc-400 mb-2">{trimmed.replace("*", "").trim()}</li>;
     }
-
     return <p key={index} className="text-sm text-zinc-400 leading-relaxed mb-4">{trimmed}</p>;
   });
 }
