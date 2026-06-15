@@ -1,120 +1,94 @@
-"use client";
-
+import fs from "fs";
+import path from "path";
 import Link from "next/link";
 
-// 📚 애드센스 봇이 좋아하는 고품질 영문 축구 포스팅 데이터 목록
-const BLOG_POSTS = [
-  {
-    id: "history-of-football-jerseys",
-    title: "The Evolution of Football Jerseys: From Wool to High-Tech Fabrics",
-    description: "Discover how football kits transformed from heavy, water-absorbing wool sweaters in the 19th century into aerodynamic, moisture-wicking engineered garments worn by today's global superstars.",
-    date: "June 14, 2026",
-    readTime: "5 min read",
-    category: "Jersey History"
-  },
-  {
-    id: "iconic-world-cup-kits",
-    title: "Top 5 Most Iconic World Cup Kits That Defined Football Culture",
-    description: "An in-depth review of the most legendary jerseys in World Cup history, including Brazil's classic 1970 yellow shirt and West Germany's geometric 1990 masterpiece.",
-    date: "June 12, 2026",
-    readTime: "7 min read",
-    category: "World Cup"
-  },
-  {
-    id: "psychology-of-jersey-colors",
-    title: "The Psychology of Colors in Football: Does Wearing Red Increase Win Rates?",
-    description: "Exploring sports science and statistical studies behind football kit colors. Analyze how psychological triggers of colors like red, blue, and neon impact referee decisions and opponent behavior.",
-    date: "June 10, 2026",
-    readTime: "4 min read",
-    category: "Sports Science"
-  },
-  {
-    id: "how-jumbotrons-changed-stadiums",
-    title: "Stadium Jumbotrons: How Big Screens Revolutionized Fan Engagement",
-    description: "A look into the technological history of massive stadium screens. From simple scoreboard matrix displays to multi-million dollar 4K LED rings that shape modern matchday experiences.",
-    date: "June 08, 2026",
-    readTime: "6 min read",
-    category: "Stadium Tech"
-  },
-  {
-    id: "ai-in-modern-sports-graphics",
-    title: "How Artificial Intelligence is Reshaping Live Sports Broadcasting",
-    description: "An analysis of how computer vision and generative AI models instantly track player data, render real-time statistics overlays, and generate customized fan interaction cards.",
-    date: "June 05, 2026",
-    readTime: "5 min read",
-    category: "AI & Tech"
-  },
-  {
-    id: "guide-to-football-photography",
-    title: "Capturing the Pitch: A Beginner's Guide to Dramatic Football Photography",
-    description: "Learn the essential camera settings, shutter speed choices, and positioning angles required to capture stadium screen-ready, high-action moments during local or professional matches.",
-    date: "June 01, 2026",
-    readTime: "6 min read",
-    category: "Photography"
+function getPostMetadata(postsDirectory: string, fileName: string) {
+  const filePath = path.join(postsDirectory, fileName);
+  const fileContent = fs.readFileSync(filePath, "utf8");
+
+  const metaMatch = fileContent.match(/---([\s\S]*?)---/);
+  const metadata: Record<string, string> = {};
+
+  if (metaMatch && metaMatch[1]) {
+    metaMatch[1].split("\n").forEach(line => {
+      const index = line.indexOf(":");
+      if (index !== -1) {
+        const key = line.substring(0, index).trim();
+        const value = line.substring(index + 1).trim().replace(/^["']|["']$/g, '');
+        metadata[key] = value;
+      }
+    });
   }
-];
+
+  return {
+    id: fileName.replace(".md", ""),
+    title: metadata.title || "Untitled",
+    date: metadata.date || "",
+    category: metadata.category || "General",
+    description: metadata.description || "",
+  };
+}
 
 export default function BlogList() {
+  // 🎯 경로를 다각도로 체크할 수 있도록 헬퍼 구성
+  let postsDirectory = path.join(process.cwd(), "posts");
+
+  // 만약 현재 작업 디렉토리 기준 상위에 있거나 다른 환경일 때를 대비한 Fallback 경로 설정
+  if (!fs.existsSync(postsDirectory)) {
+    postsDirectory = path.resolve("./posts");
+  }
+
+  // 그래도 폴더가 없다면 디버깅용 메시지 출력
+  if (!fs.existsSync(postsDirectory)) {
+    return (
+        <div className="text-center py-20 text-zinc-500">
+          <p>No posts found. Folder missing at:</p>
+          <code className="text-xs text-red-400 block mt-2 bg-zinc-900 p-2 rounded max-w-md mx-auto">{postsDirectory}</code>
+        </div>
+    );
+  }
+
+  const fileNames = fs.readdirSync(postsDirectory).filter(file => file.endsWith(".md"));
+
+  // 폴더는 존재하나 내부 md 파일이 파싱되지 않았을 때
+  if (fileNames.length === 0) {
+    return (
+        <div className="text-center py-20 text-zinc-500">
+          <p>The &apos;posts&apos; folder exists, but no <code className="text-lime-400">.md</code> files were found inside.</p>
+          <p className="text-xs text-zinc-600 mt-2">Target path: {postsDirectory}</p>
+        </div>
+    );
+  }
+
+  const posts = fileNames.map(fileName => getPostMetadata(postsDirectory, fileName));
+
   return (
       <div className="min-h-screen bg-zinc-950 text-zinc-300 py-16 px-6 font-sans">
         <div className="max-w-4xl mx-auto">
-
-          {/* 상단 헤더 영역 */}
           <div className="border-b border-zinc-800 pb-8 mb-12">
-            <Link
-                href="/"
-                className="text-xs font-bold text-zinc-500 hover:text-lime-400 transition-colors uppercase tracking-wider block mb-3"
-            >
+            <Link href="/" className="text-xs font-bold text-zinc-500 hover:text-lime-400 transition-colors uppercase tracking-wider block mb-3">
               ← Back to Jumbotron Simulator
             </Link>
             <h1 className="text-4xl font-black text-white tracking-tight">
               Football Insights <span className="text-lime-400">&</span> Stories
             </h1>
-            <p className="text-zinc-500 text-sm mt-2">
-              Explore articles about iconic jerseys, stadium technology, and the evolution of modern football culture.
-            </p>
           </div>
 
-          {/* 블로그 포스트 그리드/리스트 */}
           <div className="space-y-8">
-            {BLOG_POSTS.map((post) => (
-                <article
-                    key={post.id}
-                    className="p-6 bg-zinc-900 border border-zinc-800 rounded-2xl hover:border-zinc-700 transition-all shadow-lg group relative"
-                >
+            {posts.map((post) => (
+                <article key={post.id} className="p-6 bg-zinc-900 border border-zinc-800 rounded-2xl hover:border-zinc-700 transition-all shadow-lg group relative">
                   <div className="flex items-center gap-3 text-xs mb-3">
-                <span className="bg-zinc-800 text-lime-400 px-2.5 py-1 rounded-md font-bold uppercase tracking-wide">
-                  {post.category}
-                </span>
-                    <span className="text-zinc-600">•</span>
+                    <span className="bg-zinc-800 text-lime-400 px-2.5 py-1 rounded-md font-bold uppercase tracking-wide">{post.category}</span>
                     <span className="text-zinc-500">{post.date}</span>
-                    <span className="text-zinc-600">•</span>
-                    <span className="text-zinc-500">{post.readTime}</span>
                   </div>
-
                   <h2 className="text-xl font-extrabold text-white group-hover:text-lime-300 transition-colors mb-2">
-                    <Link href={`/blog/${post.id}`}>
-                      <span className="absolute inset-0 cursor-pointer" aria-hidden="true" />
-                      {post.title}
-                    </Link>
+                    <Link href={`/blog/${post.id}`}>{post.title}</Link>
                   </h2>
-
-                  <p className="text-sm text-zinc-400 leading-relaxed max-w-3xl">
-                    {post.description}
-                  </p>
-
-                  <div className="mt-4 flex items-center text-xs font-bold text-lime-400 group-hover:underline">
-                    Read Article →
-                  </div>
+                  <p className="text-sm text-zinc-400 leading-relaxed max-w-3xl">{post.description}</p>
+                  <div className="mt-4 flex items-center text-xs font-bold text-lime-400 group-hover:underline">Read Article →</div>
                 </article>
             ))}
           </div>
-
-          {/* 하단 페이지 공지 (애드센스 정책 준수 문구) */}
-          <div className="mt-16 text-center text-xs text-zinc-600 border-t border-zinc-900 pt-6">
-            Content on this informational blog is updated regularly to support the global football enthusiast community.
-          </div>
-
         </div>
       </div>
   );
