@@ -134,23 +134,42 @@ export default function Home() {
     }
   };
 
-  const handleActivateCamera = () => {
+  const handleActivateCamera = async () => {
     if (!imageSrc) return alert("Please sub-in a player first (Upload a photo)! ⚽");
+
     setTimeLeft(5);
     setShowAd(true);
     setIsGenerating(true);
+
+    try {
+      const response = await fetch("/api/generate-stadium", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ image: imageSrc, country: selectedCountry }),
+      });
+
+      if (!response.ok) throw new Error("API 토큰 만료 또는 합성 실패");
+      const data = await response.json();
+
+      // 💡 5초 타이머가 끝날 때까지 대기하고 싶다면 setTimeout 등으로 제어할 수 있지만,
+      // 가장 확실하게 화면을 띄우려면 여기서 직접 세팅하고 광고를 내려줍니다.
+      setResultImage(data.resultUrl);
+      setShowAd(false);
+      setIsGenerating(false);
+
+    } catch (error) {
+      console.error("Face Swap Error:", error);
+      alert("Stadium Cam connection failed. Please try again!");
+      setShowAd(false);
+      setIsGenerating(false);
+    }
   };
 
-  const handleAdComplete = () => {
+  // 광고 완료 핸들러 수정
+  const handleAdComplete = async () => {
     setShowAd(false);
     setIsGenerating(false);
 
-    const countryData = COUNTRY_TEMPLATES[selectedCountry];
-    if (countryData) {
-      setResultImage(countryData.mockJersey);
-    } else {
-      setResultImage("https://images.unsplash.com/photo-1508096682722-e99c43a406b2?w=800&auto=format&fit=crop");
-    }
   };
 
   const handleReset = () => {
