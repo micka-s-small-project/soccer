@@ -1,5 +1,7 @@
-import {Geist, Geist_Mono} from "next/font/google";
+import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import Script from "next/script";
+
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -11,16 +13,13 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-// app/layout.tsx 수정
-
 export const metadata = {
-  // 🎯 웹 브라우저 탭에 표시될 메인 제목
   title: "Micka-Lab | Football Insights & Jumbotron Simulator",
 
-  // 🎯 구글 검색엔진이 수집해갈 사이트 한 줄 요약 설명
   description: "Explore deep football stories, jersey evolution, sports science, and interactive jumbotron live simulations at Micka-Lab.",
 
-// 🎯 파비콘 파일 경로를 강제로 명시하여 기본 아이콘을 무시하도록 설정
+  keywords: ["Football", "Jumbotron", "Soccer Simulator", "Football Insights", "Sports Science"],
+
   icons: {
     icon: "/icon.png",
   },
@@ -29,11 +28,21 @@ export const metadata = {
 export default function RootLayout({
                                      children,
                                    }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
   return (
       <html lang="en">
-      <body>{children}</body>
+      <head>
+        <Script
+            async
+            src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5765606467083360"
+            crossOrigin="anonymous"
+            strategy="afterInteractive"
+        />
+      </head>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+      {children}
+      </body>
       </html>
   );
 }
