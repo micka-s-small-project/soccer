@@ -100,7 +100,13 @@ export default function Home() {
         }),
       });
 
-      if (!response.ok) throw new Error("API Integration Failed");
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error("❌ [Frontend] Server returned an error body:", errorData);
+        throw new Error(errorData.error || "API Integration Failed");
+      }
+
       const data = await response.json();
       finalUrl = data.resultUrl;
 
