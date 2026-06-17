@@ -3,72 +3,24 @@
 import Script from "next/script";
 import { useEffect, useState } from "react";
 
-// ⚽ 국가별 유니폼/스태디움 매핑 데이터
+// ⚽ Country mapping data for uniforms/stadiums
 const COUNTRY_TEMPLATES: Record<string, { flag: string; mockJersey: string }> = {
-  "South Korea": {
-    flag: "🇰🇷",
-    mockJersey: "https://images.unsplash.com/photo-1518098268272-e99c43a406b2?w=800&q=80"
-  },
-  "Brazil": {
-    flag: "🇧🇷",
-    mockJersey: "https://images.unsplash.com/photo-1560241723-d343467b7f14?w=800&q=80"
-  },
-  "Argentina": {
-    flag: "🇦🇷",
-    mockJersey: "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=800&q=80"
-  },
-  "France": {
-    flag: "🇫🇷",
-    mockJersey: "https://images.unsplash.com/photo-1431324155629-1a6aea185f5a?w=800&q=80"
-  },
-  "United Kingdom": {
-    flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿",
-    mockJersey: "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=800&q=80"
-  },
-  "Germany": {
-    flag: "🇩🇪",
-    mockJersey: "https://images.unsplash.com/photo-1551958219-acbc608c6377?w=800&q=80"
-  },
-  "Spain": {
-    flag: "🇪🇸",
-    mockJersey: "https://images.unsplash.com/photo-1579952365111-3a479aa57a72?w=800&q=80"
-  },
-  "Japan": {
-    flag: "🇯🇵",
-    mockJersey: "https://images.unsplash.com/photo-1599151485067-a4994228c11e?w=800&q=80"
-  },
-  "Portugal": {
-    flag: "🇵🇹",
-    mockJersey: "https://images.unsplash.com/photo-1517466787929-bc90951d0974?w=800&q=80"
-  },
-  "Netherlands": {
-    flag: "🇳🇱",
-    mockJersey: "https://images.unsplash.com/photo-1489945052260-4f21c52268b9?w=800&q=80"
-  },
-  "Italy": {
-    flag: "🇮🇹",
-    mockJersey: "https://images.unsplash.com/photo-1510566337590-2fc1f21d0faa?w=800&q=80"
-  },
-  "Croatia": {
-    flag: "🇭🇷",
-    mockJersey: "https://images.unsplash.com/photo-1516567727245-ad8c68f3ec93?w=800&q=80"
-  },
-  "Morocco": {
-    flag: "🇲🇦",
-    mockJersey: "https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=800&q=80"
-  },
-  "USA": {
-    flag: "🇺🇸",
-    mockJersey: "https://images.unsplash.com/photo-1552667466-07770ae110d0?w=800&q=80"
-  },
-  "Mexico": {
-    flag: "🇲🇽",
-    mockJersey: "https://images.unsplash.com/photo-1504155611830-97998068170b?w=800&q=80"
-  },
-  "Uruguay": {
-    flag: "🇺🇾",
-    mockJersey: "https://images.unsplash.com/photo-1459865264687-595d652de67e?w=800&q=80"
-  },
+  "South Korea": { flag: "🇰🇷", mockJersey: "https://images.unsplash.com/photo-1518098268272-e99c43a406b2?w=800&q=80" },
+  "Brazil": { flag: "🇧🇷", mockJersey: "https://images.unsplash.com/photo-1560241723-d343467b7f14?w=800&q=80" },
+  "Argentina": { flag: "🇦🇷", mockJersey: "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=800&q=80" },
+  "France": { flag: "🇫🇷", mockJersey: "https://images.unsplash.com/photo-1431324155629-1a6aea185f5a?w=800&q=80" },
+  "United Kingdom": { flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿", mockJersey: "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=800&q=80" },
+  "Germany": { flag: "🇩🇪", mockJersey: "https://images.unsplash.com/photo-1551958219-acbc608c6377?w=800&q=80" },
+  "Spain": { flag: "🇪🇸", mockJersey: "https://images.unsplash.com/photo-1579952365111-3a479aa57a72?w=800&q=80" },
+  "Japan": { flag: "🇯🇵", mockJersey: "https://images.unsplash.com/photo-1599151485067-a4994228c11e?w=800&q=80" },
+  "Portugal": { flag: "🇵🇹", mockJersey: "https://images.unsplash.com/photo-1517466787929-bc90951d0974?w=800&q=80" },
+  "Netherlands": { flag: "🇳🇱", mockJersey: "https://images.unsplash.com/photo-1489945052260-4f21c52268b9?w=800&q=80" },
+  "Italy": { flag: "🇮🇹", mockJersey: "https://images.unsplash.com/photo-1510566337590-2fc1f21d0faa?w=800&q=80" },
+  "Croatia": { flag: "🇭🇷", mockJersey: "https://images.unsplash.com/photo-1516567727245-ad8c68f3ec93?w=800&q=80" },
+  "Morocco": { flag: "🇲🇦", mockJersey: "https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=800&q=80" },
+  "USA": { flag: "🇺🇸", mockJersey: "https://images.unsplash.com/photo-1552667466-07770ae110d0?w=800&q=80" },
+  "Mexico": { flag: "🇲🇽", mockJersey: "https://images.unsplash.com/photo-1504155611830-97998068170b?w=800&q=80" },
+  "Uruguay": { flag: "🇺🇾", mockJersey: "https://images.unsplash.com/photo-1459865264687-595d652de67e?w=800&q=80" },
 };
 
 export default function Home() {
@@ -77,29 +29,23 @@ export default function Home() {
   const [showAd, setShowAd] = useState<boolean>(false);
   const [resultImage, setResultImage] = useState<string | null>(null);
   const [selectedCountry, setSelectedCountry] = useState<string>("South Korea");
-  const [timeLeft, setTimeLeft] = useState<number>(5);
 
-  useEffect(() => {
-    let timer: NodeJS.Timeout;
-
-    if (showAd && timeLeft > 0) {
-      timer = setInterval(() => {
-        setTimeLeft((prev) => prev - 1);
-      }, 1000);
-    } else if (showAd && timeLeft === 0) {
-      handleAdComplete();
-    }
-
-    return () => clearInterval(timer);
-  }, [showAd, timeLeft]);
-
+  // AdSense initialization safely isolated
   useEffect(() => {
     if (showAd) {
-      try {
-        ((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({});
-      } catch (e) {
-        console.error("AdSense push error:", e);
-      }
+      const injectAd = () => {
+        try {
+          const insElement = document.querySelector(".adsbygoogle");
+          if (insElement && !insElement.hasAttribute("data-adsbygoogle-status")) {
+            ((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({});
+          }
+        } catch (e) {
+          console.log("AdSense push background bypass (Safe)");
+        }
+      };
+
+      const timer = setTimeout(injectAd, 100);
+      return () => clearTimeout(timer);
     }
   }, [showAd]);
 
@@ -134,42 +80,46 @@ export default function Home() {
     }
   };
 
+  // Guaranteed 3-second delay structure for stadium matching
   const handleActivateCamera = async () => {
     if (!imageSrc) return alert("Please sub-in a player first (Upload a photo)! ⚽");
 
-    setTimeLeft(5);
     setShowAd(true);
     setIsGenerating(true);
+
+    let finalUrl: string | null = null;
+    let hasError = false;
 
     try {
       const response = await fetch("/api/generate-stadium", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ image: imageSrc, country: selectedCountry }),
+        body: JSON.stringify({
+          image: imageSrc,
+          country: selectedCountry,
+        }),
       });
 
-      if (!response.ok) throw new Error("API 토큰 만료 또는 합성 실패");
+      if (!response.ok) throw new Error("API Integration Failed");
       const data = await response.json();
-
-      // 💡 5초 타이머가 끝날 때까지 대기하고 싶다면 setTimeout 등으로 제어할 수 있지만,
-      // 가장 확실하게 화면을 띄우려면 여기서 직접 세팅하고 광고를 내려줍니다.
-      setResultImage(data.resultUrl);
-      setShowAd(false);
-      setIsGenerating(false);
+      finalUrl = data.resultUrl;
 
     } catch (error) {
-      console.error("Face Swap Error:", error);
-      alert("Stadium Cam connection failed. Please try again!");
-      setShowAd(false);
-      setIsGenerating(false);
+      console.error("Stadium Cam API Error:", error);
+      hasError = true;
     }
-  };
 
-  // 광고 완료 핸들러 수정
-  const handleAdComplete = async () => {
+    // Force 3 seconds hold for AdSense impressions and immersive UX
+    await new Promise((resolve) => setTimeout(resolve, 3000));
+
     setShowAd(false);
     setIsGenerating(false);
 
+    if (hasError) {
+      alert("Stadium Cam connection failed. Please try again! 🎥");
+    } else if (finalUrl) {
+      setResultImage(finalUrl);
+    }
   };
 
   const handleReset = () => {
@@ -344,8 +294,6 @@ export default function Home() {
         {/* 📚 [AdSense Approval Booster] English Footer Content & Link Section */}
         <footer className="w-full max-w-3xl mt-16 mb-12 p-8 border-t border-zinc-800 text-zinc-400">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-
-            {/* Left Area: Explanatory text optimized for AdSense indexer bots */}
             <div>
               <h3 className="text-base font-bold text-lime-400 mb-3">AI Soccer Jumbotron Simulator</h3>
               <p className="text-xs leading-relaxed text-zinc-500">
@@ -356,7 +304,6 @@ export default function Home() {
               </p>
             </div>
 
-            {/* Right Area: Navigation to blog posts and legal compliance guidelines */}
             <div>
               <h3 className="text-base font-bold text-white mb-3">Football Insights & Support</h3>
               <ul className="space-y-3 text-xs">
@@ -365,16 +312,8 @@ export default function Home() {
                     <span>📚</span> Football Story Blog (Jersey History & Guides)
                   </a>
                 </li>
-                <li>
-                  <a href="/privacy" className="hover:text-zinc-300 transition-colors flex items-center gap-1">
-                    <span>🔒</span> Privacy Policy
-                  </a>
-                </li>
-                <li>
-                  <a href="/terms" className="hover:text-zinc-300 transition-colors flex items-center gap-1">
-                    <span>📜</span> Terms of Service
-                  </a>
-                </li>
+                <li><a href="/privacy" className="hover:text-zinc-300 transition-colors flex items-center gap-1"><span>🔒</span> Privacy Policy</a></li>
+                <li><a href="/terms" className="hover:text-zinc-300 transition-colors flex items-center gap-1"><span>📜</span> Terms of Service</a></li>
               </ul>
             </div>
           </div>
@@ -384,18 +323,17 @@ export default function Home() {
           </div>
         </footer>
 
-        {/* Interstitial Ad / Buffer Screen */}
+        {/* Immersive Ad / Buffer Screen */}
         {showAd && (
             <div className="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center z-50 animate-fade-in">
               <div className="bg-zinc-900 border-2 border-zinc-800 rounded-2xl p-8 max-w-md w-full mx-4 text-center shadow-2xl relative overflow-hidden">
-                <div
-                    className="absolute top-0 left-0 h-1.5 bg-lime-400 transition-all duration-1000 ease-linear"
-                    style={{width: `${(timeLeft / 5) * 100}%`}}
-                />
+                <div className="absolute top-0 left-0 h-1.5 bg-lime-400 w-full animate-pulse" />
 
-                <span className="text-xs font-black tracking-widest text-zinc-500 uppercase block mb-1">Halftime Commercial</span>
-                <h2 className="text-lg font-black text-white uppercase mb-4">
-                  Generating {selectedCountry} Jersey... <span className="text-lime-400 font-mono">({timeLeft}s)</span>
+                <span className="text-xs font-black tracking-widest text-lime-400 uppercase block mb-1">
+                  LIVE STADIUM FEED
+                </span>
+                <h2 className="text-xl font-black text-white uppercase mb-4 tracking-tight">
+                  🏟️ Entering {selectedCountry} Stadium...
                 </h2>
 
                 <div className="w-full min-h-[250px] bg-black border border-zinc-800 rounded-xl flex items-center justify-center overflow-hidden">
@@ -407,8 +345,8 @@ export default function Home() {
                        data-full-width-responsive="true"></ins>
                 </div>
 
-                <p className="text-[11px] text-zinc-500 mt-4 leading-normal">
-                  Your World Cup Stadium Jumbotron Card will be ready immediately after the sponsor message. Thank you for your patience!
+                <p className="text-[11px] text-zinc-400 mt-4 leading-normal font-medium">
+                  ⚡ Securing spectator view and matching official squad uniform kit. Please hold on standard transmission!
                 </p>
               </div>
             </div>

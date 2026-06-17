@@ -23,7 +23,7 @@ export async function POST(request: Request) {
     // -------------------------------------------------------------
     // 4. 🔥 여기에 나중에 Face Swap API 연동 로직이 들어갑니다.
     // -------------------------------------------------------------
-    await new Promise((resolve) => setTimeout(resolve, 3000)); // 임시 딜레이
+    await new Promise((resolve) => setTimeout(resolve, 3000));
 
     // 5. 프론트엔드로 결과 반환
     return NextResponse.json({ resultUrl: templateImageUrl });
