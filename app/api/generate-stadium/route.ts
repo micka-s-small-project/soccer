@@ -5,11 +5,6 @@ const replicate = new Replicate({
   auth: process.env.REPLICATE_API_TOKEN,
 });
 
-// 🚨 본인의 GitHub 유저명과 저장소(Repository) 이름을 적어주세요.
-// 예: https://github.com/micka/soccer 라면 아래와 같이 세팅합니다.
-const GITHUB_USERNAME = "yellTa";
-const GITHUB_REPO = "soccer";
-
 export async function POST(request: Request) {
   try {
     const { image, country } = await request.json();
@@ -22,34 +17,74 @@ export async function POST(request: Request) {
     const randomNumber = Math.random() < 0.5 ? 1 : 2;
     const templateFileName = `${formattedCountry}-${randomNumber}.png`;
 
-    // 💡 [핵심] 깃허브 메인 브랜치에 올라간 public 폴더 내부의 이미지 절대 경로를 생성합니다.
-    // 이렇게 하면 Replicate 구글 서버가 깃허브 인터넷 주소를 통해 내 유니폼 템플릿을 아주 가볍고 빠르게 다운로드해 갑니다.
-    const targetImageUrl = `https://raw.githubusercontent.com/${GITHUB_USERNAME}/${GITHUB_REPO}/main/public/templates/${formattedCountry}/${templateFileName}`;
+    const targetImageUrl = `https://raw.githubusercontent.com/micka-s-small-project/soccer/refs/heads/main/public/templates/${formattedCountry}/${templateFileName}`;
 
-    console.log(`🚀 Requesting Face Swap with Template URL: ${targetImageUrl}`);
+    console.log(`🚀 [1/3] Triggering Face Swap Prediction...`);
 
-    const output = await replicate.run(
-        "cdingram/face-swap:d1d6ea8c8be89d664a07a457526f7128109dee7030fdac424788d762c71ed111",
-        {
-          input: {
-            input_image: targetImageUrl, // 가벼운 인터넷 URL 전송 (422 에러 원천 차단)
-            swap_image: image,          // 사용자 얼굴 사진 (Base64)
-          },
-        }
-    );
+    // 1. 비동기 예측(Prediction) 객체 생성
+    let prediction = await replicate.predictions.create({
+      version: "d1d6ea8c8be89d664a07a457526f7128109dee7030fdac424788d762c71ed111",
+      input: {
+        input_image: targetImageUrl,
+        swap_image: image,
+      },
+    });
 
-    if (!output) {
-      throw new Error("Replicate did not return any output.");
+    console.log(`⏳ [2/3] Prediction created (ID: ${prediction.id}). Waiting for AI to finish...`);
+
+    // 2. 🔥 [고친 점] while 폴링 대신 공식 .wait() 메소드를 사용해 완벽히 대기합니다.
+    // AI 처리가 100% 끝나고 output 결과물이 JSON에 채워질 때까지 안전하게 block됩니다.
+    prediction = await replicate.wait(prediction);
+
+    // 3. 에러 상태인 경우 분기 차단
+    if (prediction.status === "failed") {
+      console.error("🚨 Replicate Prediction Internal Failure:", prediction.error);
+      throw new Error(`AI generation failed: ${prediction.error}`);
     }
 
-    const resultImageUrl = output.toString();
-    console.log(`✨ Face Swap Successful! Result URL: ${resultImageUrl}`);
+    // 4. 🎉 성공 상태일 때 결과 뽑아내기
+    const output = prediction.output;
+    console.log("📥 [Backend] Synced Raw Replicate Output:", JSON.stringify(output, null, 2));
+
+    if (!output) {
+      throw new Error("AI successfully processed but returned empty output data.");
+    }
+
+    let resultImageUrl = "";
+
+    // 공식 문서대로 단일 문자열 포맷이 오거나, 예외적인 배열 형태가 와도 모두 소화하는 안전장치
+    if (Array.isArray(output)) {
+      resultImageUrl = output[0]?.toString() || "";
+    } else if (typeof output === "object" && output && "url" in output) {
+      resultImageUrl = (output as any).url.toString();
+    } else {
+      resultImageUrl = output.toString();
+    }
+
+    if (!resultImageUrl || !resultImageUrl.startsWith("http")) {
+      throw new Error("Failed to extract a valid image URL from AI output.");
+    }
+
+    console.log(`✨ [3/3] Face Swap Complete! Result URL: ${resultImageUrl}`);
 
     return NextResponse.json({ resultUrl: resultImageUrl });
 
   } catch (error: any) {
-    // 중복 읽기 에러를 방지하도록 깔끔하게 정돈된 에러 로그
-    console.error("💥 [Backend] Execution Failed:", error.message || error);
-    return NextResponse.json({ error: error.message || "Internal Server Error" }, { status: 500 });
+    console.error("💥 [Backend] Execution Failed!");
+
+    if (error.response) {
+      try {
+        const errorBody = await error.response.clone().text();
+        console.error("📋 Replicate Response Status:", error.response.status);
+        console.error("📄 Replicate Error Detail:", errorBody);
+      } catch (cloneError) {
+        console.error("📝 Message:", error.message);
+      }
+    } else {
+      console.error("📝 Error Message:", error.message || error);
+    }
+
+    const friendlyError = error.message || "Internal Server Error during Face Swap";
+    return NextResponse.json({ error: friendlyError }, { status: 500 });
   }
 }
