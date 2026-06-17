@@ -15,7 +15,7 @@ const COUNTRY_TEMPLATES: Record<string, { flag: string; mockJersey: string }> = 
   },
   "Argentina": {
     flag: "🇦🇷",
-    mockJersey: "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=800&q=80"
+    mockJersey: "https://images.unsplash.com/photo-150809868272-e99c43a406b2?w=800&q=80"
   },
   "France": {
     flag: "🇫🇷",
@@ -77,7 +77,7 @@ export default function Home() {
   const [showAd, setShowAd] = useState<boolean>(false);
   const [resultImage, setResultImage] = useState<string | null>(null);
   const [selectedCountry, setSelectedCountry] = useState<string>("South Korea");
-  const [timeLeft, setTimeLeft] = useState<number>(5);
+  const [timeLeft, setTimeLeft] = useState<number>(3);
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -86,8 +86,6 @@ export default function Home() {
       timer = setInterval(() => {
         setTimeLeft((prev) => prev - 1);
       }, 1000);
-    } else if (showAd && timeLeft === 0) {
-      handleAdComplete();
     }
 
     return () => clearInterval(timer);
@@ -137,22 +135,25 @@ export default function Home() {
   const handleActivateCamera = async () => {
     if (!imageSrc) return alert("Please sub-in a player first (Upload a photo)! ⚽");
 
-    setTimeLeft(5);
+    setTimeLeft(3);
     setShowAd(true);
     setIsGenerating(true);
 
     try {
-      const response = await fetch("/api/generate-stadium", {
+      // API 호출과 최소 3초 대기 딜레이를 병렬로 처리하여 자연스러운 로딩 연출
+      const apiPromise = fetch("/api/generate-stadium", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ image: imageSrc, country: selectedCountry }),
       });
 
+      const delayPromise = new Promise((resolve) => setTimeout(resolve, 3000));
+
+      const [response] = await Promise.all([apiPromise, delayPromise]);
+
       if (!response.ok) throw new Error("API 토큰 만료 또는 합성 실패");
       const data = await response.json();
 
-      // 💡 5초 타이머가 끝날 때까지 대기하고 싶다면 setTimeout 등으로 제어할 수 있지만,
-      // 가장 확실하게 화면을 띄우려면 여기서 직접 세팅하고 광고를 내려줍니다.
       setResultImage(data.resultUrl);
       setShowAd(false);
       setIsGenerating(false);
@@ -169,7 +170,6 @@ export default function Home() {
   const handleAdComplete = async () => {
     setShowAd(false);
     setIsGenerating(false);
-
   };
 
   const handleReset = () => {
@@ -390,12 +390,12 @@ export default function Home() {
               <div className="bg-zinc-900 border-2 border-zinc-800 rounded-2xl p-8 max-w-md w-full mx-4 text-center shadow-2xl relative overflow-hidden">
                 <div
                     className="absolute top-0 left-0 h-1.5 bg-lime-400 transition-all duration-1000 ease-linear"
-                    style={{width: `${(timeLeft / 5) * 100}%`}}
+                    style={{width: `${(timeLeft / 3) * 100}%`}}
                 />
 
                 <span className="text-xs font-black tracking-widest text-zinc-500 uppercase block mb-1">Halftime Commercial</span>
                 <h2 className="text-lg font-black text-white uppercase mb-4">
-                  Generating {selectedCountry} Jersey... <span className="text-lime-400 font-mono">({timeLeft}s)</span>
+                  Entering Stadium...
                 </h2>
 
                 <div className="w-full min-h-[250px] bg-black border border-zinc-800 rounded-xl flex items-center justify-center overflow-hidden">
