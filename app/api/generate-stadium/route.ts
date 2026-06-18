@@ -13,78 +13,85 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
+    // 1. 국가별 유니폼 이미지 주소 생성
     const formattedCountry = country.toLowerCase().replace(/ /g, "-");
     const randomNumber = Math.random() < 0.5 ? 1 : 2;
-    const templateFileName = `${formattedCountry}-${randomNumber}.png`;
+    const templateFileName = `${formattedCountry}.png`;
+    const targetImageUrl = `https://raw.githubusercontent.com/micka-s-small-project/soccer/refs/heads/main/public/templates/soccer/${formattedCountry}/${templateFileName}`;
 
-    const targetImageUrl = `https://raw.githubusercontent.com/micka-s-small-project/soccer/refs/heads/main/public/templates/${formattedCountry}/${templateFileName}`;
+    // 2. 🎰 50% 확률로 두 가지 프롬프트 중 하나를 랜덤 선택하여 다양성 부여
+    const isGoalScenario = Math.random() < 0.5;
+    let finalPrompt = "";
 
-    console.log(`🚀 [1/3] Triggering Face Swap Prediction...`);
+    if (isGoalScenario) {
+      // 🔥 버전 A: 골 세레머니 (Euphoria)
+      finalPrompt = `An authentic, realistic sports broadcast screenshot-style documentary photo of the specific individual from the attached reference image, sitting in the spectator stands of a professional football stadium during a peak match moment.
 
-    // 1. 비동기 예측(Prediction) 객체 생성
-    let prediction = await replicate.predictions.create({
+[Subject Integration & Realism]
+The individual from the reference image is captured from the chest up, mid-reaction with a raw, emotionally immersed expression of sudden celebration. The person has eyes wide with a mix of disbelief and intense euphoria, naturally looking toward the pitch or celebrating crowd, NOT looking directly into the camera. The person maintains their exact facial structure, jawline, and natural features from the reference image. Any headwear like beanies or hats from the reference image is removed, revealing a natural hairstyle that seamlessly blends with the stadium environment and fits the person's biological gender.
+
+[Clothing Details]
+The person is wearing the exact official football jersey from the attached uniform image, with the jersey fit tailored naturally to the individual's body shape and proportions.
+
+[Environment & Atmosphere]
+Set in the crowded stands immediately after a crucial goal is scored. Candid live broadcast moment with realistic football TV broadcast camera framing, telephoto sports lens look with slight broadcast zoom compression. Shallow depth of field with background fans blurred in motion, throwing their arms up in celebration under authentic stadium floodlights.
+
+[Cinematic & Broadcast Quality]
+Minimal football broadcast overlay graphics showing an updated scoreline at the corner, a subtle LIVE watermark, documentary realism, realistic skin texture under stadium lighting, explosive crowd atmosphere, 16:9 ratio.`;
+    } else {
+      // ⚽ 버전 B: 라이브 경기 몰입 (Neutral)
+      finalPrompt = `An authentic, realistic sports broadcast screenshot-style documentary photo of the specific individual from the attached reference image, sitting in the spectator stands of a professional football stadium during a live match.
+
+[Subject Integration & Realism]
+The individual from the reference image is captured from the chest up, sitting naturally in the stadium seats. The person has delicate facial features and a neutral yet emotionally immersed expression, fully focused on the game. The person is naturally looking toward the football field or slightly off-camera, NOT looking directly into the camera. The person maintains their exact facial structure, jawline, and natural features from the reference image. Any headwear like beanies or hats from the reference image is removed, revealing a natural hairstyle that seamlessly blends with the stadium environment and fits the person's biological gender.
+
+[Clothing Details]
+The person is wearing the exact official football jersey from the attached uniform image, with the jersey fit tailored naturally to the individual's body shape and proportions.
+
+[Environment & Atmosphere]
+Set in the crowded spectator stands among diverse football fans during an intense live match. Candid live broadcast moment with a realistic crowd atmosphere under authentic, bright stadium floodlights. 
+
+[Cinematic & Broadcast Quality]
+Captured with a telephoto sports lens look, showcasing slight broadcast zoom compression and a shallow depth of field with background fans subtly blurred. Minimal football broadcast overlay graphics showing match info or time at the corner, a subtle LIVE watermark, documentary realism, realistic skin texture under stadium lighting, 16:9 ratio.`;
+    }
+
+    console.log(`🚀 [Backend] Triggering openai/gpt-image-2 Model...`);
+
+    // 3. 🔥 openai/gpt-image-2 규격에 맞게 파라미터 매핑 및 API 호출
+    // (replicate.wait를 빼고 0.5초 만에 응답을 뱉어 프론트 타임아웃을 차단합니다.)
+    const prediction = await replicate.predictions.create({
+      // openai/gpt-image-2 모델의 고유 해시 ID
       version: "d1d6ea8c8be89d664a07a457526f7128109dee7030fdac424788d762c71ed111",
       input: {
-        input_image: targetImageUrl,
-        swap_image: image,
+        prompt: finalPrompt,             // 📝 우리가 고도화한 프롬프트 주입
+        image: image,                     // 👤 유저가 업로드한 셀카 이미지
+        mask_image: targetImageUrl,       // 👕 깃허브에 저장된 국가별 유니폼 이미지
+        // 💡 만약 모델이 mask_image 대신 second_image나 다른 필드명을 쓴다면 공식문서 스펙에 맞춰 이름만 바꿔주세요.
       },
     });
 
-    console.log(`⏳ [2/3] Prediction created (ID: ${prediction.id}). Waiting for AI to finish...`);
+    console.log(`📥 Ticket Created! Prediction ID: ${prediction.id}`);
 
-    // 2. 🔥 [고친 점] while 폴링 대신 공식 .wait() 메소드를 사용해 완벽히 대기합니다.
-    // AI 처리가 100% 끝나고 output 결과물이 JSON에 채워질 때까지 안전하게 block됩니다.
-    prediction = await replicate.wait(prediction);
-
-    // 3. 에러 상태인 경우 분기 차단
-    if (prediction.status === "failed") {
-      console.error("🚨 Replicate Prediction Internal Failure:", prediction.error);
-      throw new Error(`AI generation failed: ${prediction.error}`);
-    }
-
-    // 4. 🎉 성공 상태일 때 결과 뽑아내기
-    const output = prediction.output;
-    console.log("📥 [Backend] Synced Raw Replicate Output:", JSON.stringify(output, null, 2));
-
-    if (!output) {
-      throw new Error("AI successfully processed but returned empty output data.");
-    }
-
-    let resultImageUrl = "";
-
-    // 공식 문서대로 단일 문자열 포맷이 오거나, 예외적인 배열 형태가 와도 모두 소화하는 안전장치
-    if (Array.isArray(output)) {
-      resultImageUrl = output[0]?.toString() || "";
-    } else if (typeof output === "object" && output && "url" in output) {
-      resultImageUrl = (output as any).url.toString();
-    } else {
-      resultImageUrl = output.toString();
-    }
-
-    if (!resultImageUrl || !resultImageUrl.startsWith("http")) {
-      throw new Error("Failed to extract a valid image URL from AI output.");
-    }
-
-    console.log(`✨ [3/3] Face Swap Complete! Result URL: ${resultImageUrl}`);
-
-    return NextResponse.json({ resultUrl: resultImageUrl });
+    // 프론트엔드에게 작업 티켓 번호만 던지고 즉시 커넥션을 해제합니다.
+    return NextResponse.json({ predictionId: prediction.id });
 
   } catch (error: any) {
-    console.error("💥 [Backend] Execution Failed!");
+    console.error("💥 [Backend] Generation Request Failed!");
 
-    if (error.response) {
-      try {
-        const errorBody = await error.response.clone().text();
-        console.error("📋 Replicate Response Status:", error.response.status);
-        console.error("📄 Replicate Error Detail:", errorBody);
-      } catch (cloneError) {
-        console.error("📝 Message:", error.message);
-      }
-    } else {
-      console.error("📝 Error Message:", error.message || error);
+    // 🛡️ 크레딧 부족 시 $0.99 결제 버튼을 잠그기 위한 점검 모드 가드 작동
+    const errMsg = error.message || "";
+    if (
+        errMsg.includes("credit") ||
+        errMsg.includes("balance") ||
+        errMsg.includes("fund") ||
+        errMsg.includes("failed")
+    ) {
+      return NextResponse.json(
+          { error: "SYSTEM_MAINTENANCE: The Jumbotron is recharging. 🎫⚽" },
+          { status: 422 }
+      );
     }
 
-    const friendlyError = error.message || "Internal Server Error during Face Swap";
-    return NextResponse.json({ error: friendlyError }, { status: 500 });
+    return NextResponse.json({ error: error.message || "Internal Server Error" }, { status: 500 });
   }
 }
