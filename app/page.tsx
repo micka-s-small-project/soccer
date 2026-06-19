@@ -37,21 +37,32 @@ export default function Home() {
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => e.preventDefault();
   const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => e.preventDefault();
 
+  // 🌟 Enhanced Drop handler with clean event tracking
   const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
-    const file = e.dataTransfer.files[0];
-    if (file) {
+    const file = e.dataTransfer?.files?.[0];
+    if (file && file.type.startsWith("image/")) {
       const reader = new FileReader();
-      reader.onloadend = () => setImageSrc(reader.result as string);
+      reader.onloadend = () => {
+        if (typeof reader.result === "string") {
+          setImageSrc(reader.result);
+        }
+      };
       reader.readAsDataURL(file);
     }
   };
 
+  // 🌟 Enhanced File Selection handler with clean state verification
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
-      reader.onloadend = () => setImageSrc(reader.result as string);
+      reader.onloadend = () => {
+        if (typeof reader.result === "string") {
+          setImageSrc(reader.result);
+          console.log("📸 Image successfully parsed to base64 state hook.");
+        }
+      };
       reader.readAsDataURL(file);
     }
   };
@@ -129,8 +140,7 @@ export default function Home() {
   };
 
   useEffect(() => {
-    // 🌟 If resultPage is active, flush cleanly
-    if (resultImage) {
+    if (resultImage || !imageSrc) {
       const container = document.getElementById("paypal-button-container");
       if (container) container.innerHTML = "";
       return;
@@ -148,7 +158,6 @@ export default function Home() {
         return;
       }
 
-      // If it already contains an iframe built by the script, do not re-clear it
       if (container.children.length > 0) return;
 
       container.innerHTML = "";
@@ -227,19 +236,37 @@ export default function Home() {
       if (timerId) clearTimeout(timerId);
     };
 
-  }, [isSdkLoaded, selectedCountry, resultImage]); // 🌟 Removed imageSrc from triggers to avoid teardowns
+  }, [imageSrc, isSdkLoaded, selectedCountry, resultImage]);
 
   const handleReset = () => {
     setImageSrc(null);
     setResultImage(null);
   };
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
     if (!resultImage) return;
-    const link = document.createElement('a');
-    link.href = resultImage;
-    link.download = `stadium_${selectedCountry.toLowerCase().replace(" ", "_")}.png`;
-    link.click();
+
+    try {
+      const response = await fetch(resultImage);
+      const blob = await response.blob();
+
+      const localUrl = URL.createObjectURL(blob);
+
+      const link = document.createElement('a');
+      link.href = localUrl;
+      link.download = `stadium_${selectedCountry.toLowerCase().replace(" ", "_")}.png`;
+
+      document.body.appendChild(link);
+      link.click();
+
+      document.body.removeChild(link);
+      URL.revokeObjectURL(localUrl);
+
+    } catch (err) {
+      console.error("Direct download failed, falling back to new window:", err);
+      // Safe backup fallback if a CORS block hits the external link fetch
+      window.open(resultImage, '_blank');
+    }
   };
 
   const handleCopyImage = async () => {
@@ -366,11 +393,11 @@ export default function Home() {
                       <span className="text-4xl mb-3 group-hover:animate-bounce">⚽</span>
                       <p className="text-lg font-bold text-zinc-100">Be a Soccer Star!</p>
                       <p className="text-sm text-zinc-400 mt-1">Pass (Drop) your photo here or click to substitute player.</p>
-                      <input type="file" onChange={handleFileInput} hidden />
+                      {/* 🌟 Hook explicit event handler on update */}
+                      <input type="file" accept="image/*" onChange={handleFileInput} hidden />
                     </label>
                 )}
 
-                {/* Placeholder feedback button that displays ONLY when imageSrc is empty */}
                 {!imageSrc && (
                     <button disabled
                             className="w-full max-w-lg h-14 rounded-xl font-black text-base bg-zinc-800 text-zinc-500 cursor-not-allowed">
@@ -389,8 +416,6 @@ export default function Home() {
               </div>
           )}
 
-          {/* 🌟 THE GOLDEN FIX: Leave the wrapper permanently in layout flow.
-              Toggles viewability gracefully via strict visibility and opacity controls. */}
           <div
               className={`w-full max-w-lg mt-4 z-10 transition-all duration-300 ${
                   (imageSrc && !resultImage)
