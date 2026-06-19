@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import Script from "next/script";
 
 // ⚽ Country mapping data for uniforms/stadiums
 const COUNTRY_TEMPLATES: Record<string, { flag: string; mockJersey: string }> = {
@@ -28,6 +29,7 @@ export default function Home() {
   const [loadingMessage, setLoadingMessage] = useState<string>("🏟️ Entering Stadium...");
   const [resultImage, setResultImage] = useState<string | null>(null);
   const [selectedCountry, setSelectedCountry] = useState<string>("South Korea");
+  const [isSdkLoaded, setIsSdkLoaded] = useState<boolean>(false);
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => e.preventDefault();
   const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => e.preventDefault();
@@ -51,22 +53,20 @@ export default function Home() {
     }
   };
 
-  // 🔥 결제 완료 후 실행될 비동기 생성 및 폴링 컨트롤러
-  const handleActivateCamera = async () => {
-    if (!imageSrc) return alert("Please sub-in a player first (Upload a photo)! ⚽");
+  const handleActivateCamera = async (): Promise<boolean> => {
+    if (!imageSrc) {
+      alert("Please sub-in a player first (Upload a photo)! ⚽");
+      return false;
+    }
 
     setIsGenerating(true);
     setLoadingMessage("Securing ticket from AI Referee... 🎫");
 
     try {
-      // [A] 백엔드에 결제 확인 후 비동기 생성 요청
       const response = await fetch("/api/generate-stadium", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          image: imageSrc,
-          country: selectedCountry,
-        }),
+        body: JSON.stringify({ image: imageSrc, country: selectedCountry }),
       });
 
       if (!response.ok) {
@@ -76,29 +76,26 @@ export default function Home() {
 
       const data = await response.json();
 
-      // [B] 발급된 티켓 번호로 무조건 대기 루프(폴링) 가동
       if (data.predictionId) {
         console.log("🎟️ Ticket Received:", data.predictionId);
-
-        // AI 작업 완공 처리까지 await로 브라우저를 붙잡아둡니다.
         const finalUrl = await runStatusCheckPolling(data.predictionId);
 
         setIsGenerating(false);
         if (finalUrl) {
           setResultImage(finalUrl);
+          return true;
         }
-      } else {
-        throw new Error("Prediction ID missing from server response.");
       }
+      return false;
 
     } catch (error: any) {
       console.error("Stadium Cam API Error:", error);
       setIsGenerating(false);
       alert(error.message || "Stadium Cam connection failed. Please try again! 🎥");
+      return false;
     }
   };
 
-  // 🔄 백엔드가 최종 결과물을 뱉을 때까지 4초 주기로 상태 조회
   const runStatusCheckPolling = (predictionId: string): Promise<string | null> => {
     return new Promise((resolve, reject) => {
       const checkInterval = setInterval(async () => {
@@ -127,6 +124,107 @@ export default function Home() {
       }, 4000);
     });
   };
+
+  useEffect(() => {
+    // 🌟 Fix 1: If resultImage is active, immediately flush the wrapper clear and terminate
+    if (resultImage) {
+      const container = document.getElementById("paypal-button-container");
+      if (container) container.innerHTML = "";
+      return;
+    }
+
+    if (!isSdkLoaded || !(window as any).paypal) return;
+    if (!imageSrc) return;
+
+    let timerId: NodeJS.Timeout;
+
+    const initPaypal = () => {
+      const container = document.getElementById("paypal-button-container");
+
+      if (!container) {
+        timerId = setTimeout(initPaypal, 50);
+        return;
+      }
+
+      container.innerHTML = "";
+
+      (window as any).paypal.Buttons({
+        style: {
+          layout: "vertical",
+          color: "gold",
+          shape: "rect",
+          label: "pay",
+        },
+        createOrder: (data: any, actions: any) => {
+          return actions.order.create({
+            purchase_units: [
+              {
+                description: `AI Stadium Cam - ${selectedCountry} Edition`,
+                amount: {
+                  currency_code: "USD",
+                  value: "0.99",
+                },
+              },
+            ],
+          });
+        },
+
+        onApprove: async (data: any, actions: any) => {
+          try {
+            const details = await actions.order.capture();
+            const captureId = details.purchase_units[0].payments.captures[0].id;
+            console.log("💰 Payment Captured:", captureId);
+
+            (async () => {
+              const isAiSuccess = await handleActivateCamera();
+
+              if (!isAiSuccess) {
+                setLoadingMessage("🔄 AI failed. Processing automatic refund...");
+
+                const refundRes = await fetch("/api/paypal-refund", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ captureId }),
+                });
+
+                setIsGenerating(false);
+
+                if (refundRes.ok) {
+                  alert("🏟️ System Notice:\nAI generation failed. Your payment has been automatically refunded! 💳");
+                } else {
+                  alert("🏟️ System Notice:\nAI failed. Automatic refund failed. Please contact support! 📢");
+                }
+              } else {
+                console.log("🚀 AI Generation Success! Moving to result screen.");
+                setIsGenerating(false);
+              }
+            })();
+
+            return Promise.resolve();
+
+          } catch (err) {
+            console.error("PayPal Error:", err);
+            setIsGenerating(false);
+            alert("Payment process was interrupted.");
+          }
+        },
+
+        onError: (err: any) => {
+          console.error("PayPal Error:", err);
+          alert("Payment was interrupted. Please try again! 💳⚽");
+        },
+      }).render("#paypal-button-container");
+    };
+
+    initPaypal();
+
+    return () => {
+      if (timerId) clearTimeout(timerId);
+      const container = document.getElementById("paypal-button-container");
+      if (container) container.innerHTML = "";
+    };
+
+  }, [imageSrc, isSdkLoaded, selectedCountry, resultImage]);
 
   const handleReset = () => {
     setImageSrc(null);
@@ -175,6 +273,11 @@ export default function Home() {
 
   return (
       <div className="flex flex-col flex-1 min-h-screen items-center justify-center bg-zinc-950 font-sans text-white relative">
+        <Script
+            src="https://www.paypal.com/sdk/js?client-id=${process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID}"
+            strategy="afterInteractive"
+            onLoad={() => setIsSdkLoaded(true)}
+        />
         <main
             className="flex w-full max-w-3xl flex-col items-center justify-center py-20 px-8 bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl mt-12"
             onDragOver={handleDragOver}
@@ -182,10 +285,10 @@ export default function Home() {
             onDrop={handleDrop}
         >
           {resultImage ? (
-              <div className="flex flex-col items-center gap-8 text-center w-full">
-            <span className="bg-lime-400 text-black text-xs font-black px-4 py-1.5 rounded-full uppercase tracking-widest animate-pulse">
-              📺 GOAL! {selectedCountry.toUpperCase()} UNIFORM GENERATED
-            </span>
+              <div key="result-page" className="flex flex-col items-center gap-8 text-center w-full animate-fade-in">
+                <span className="bg-lime-400 text-black text-xs font-black px-4 py-1.5 rounded-full uppercase tracking-widest animate-pulse">
+                  📺 GOAL! {selectedCountry.toUpperCase()} UNIFORM GENERATED
+                </span>
                 <h1 className="max-w-xl text-3xl font-extrabold text-white">
                   🎉 You are on the {selectedCountry} Jumbotron!
                 </h1>
@@ -219,7 +322,7 @@ export default function Home() {
                 </div>
               </div>
           ) : (
-              <div className="flex flex-col items-center gap-8 text-center w-full">
+              <div key="upload-page" className="flex flex-col items-center gap-8 text-center w-full">
                 <h1 className="max-w-xl text-3xl font-extrabold leading-10 tracking-tight text-lime-400">
                   📺 LIVE: Look at Yourself on the World Cup Stadium Screen!
                 </h1>
@@ -255,37 +358,55 @@ export default function Home() {
                     </label>
                 )}
 
-                <button
-                    onClick={handleActivateCamera}
-                    disabled={!imageSrc}
-                    className={`w-full max-w-lg h-14 rounded-xl font-black text-base tracking-wide transition-all shadow-lg ${
-                        imageSrc ? "bg-lime-400 text-black hover:bg-lime-300 shadow-lime-400/20" : "bg-zinc-800 text-zinc-500 cursor-not-allowed"
-                    }`}
-                >
-                  🚀 ACTIVATE STADIUM CAM ($0.99)
-                </button>
+                {imageSrc ? (
+                    /* 🌟 Fix 2: Wrap this node with an explicit unique key and logical block protection */
+                    !resultImage && (
+                        <div key="paypal-section" className="w-full max-w-lg mt-4 z-10">
+                          <p className="text-xs text-zinc-400 mb-2 font-bold uppercase tracking-widest">
+                            💳 Premium Jumbotron Transmission ($0.99)
+                          </p>
+                          <div id="paypal-button-container" className="w-full min-h-[150px]"/>
+                        </div>
+                    )
+                ) : (
+                    <button disabled
+                            className="w-full max-w-lg h-14 rounded-xl font-black text-base bg-zinc-800 text-zinc-500 cursor-not-allowed">
+                      🚀 UPLOAD PHOTO FIRST TO ACTIVATE CAM
+                    </button>
+                )}
               </div>
           )}
         </main>
-
-        {/* 🏟️ 유료 전환에 맞춤화된 몰입형 스타디움 로딩 스크린 (광고 제거 버전) */}
         {isGenerating && (
             <div className="fixed inset-0 bg-black/95 backdrop-blur-md flex items-center justify-center z-50 animate-fade-in">
               <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8 max-w-md w-full mx-4 text-center shadow-2xl relative overflow-hidden">
                 <div className="absolute top-0 left-0 h-1.5 bg-lime-400 w-full animate-pulse" />
 
-                {/* 뱅글뱅글 도는 축구공 스피너 연출 */}
-                <div className="w-16 h-16 border-4 border-t-lime-400 border-zinc-700 rounded-full animate-spin mx-auto mb-6"></div>
+                <div className="w-16 h-16 border-4 border-t-lime-400 border-zinc-700 rounded-full animate-spin mx-auto mb-5"></div>
 
                 <span className="text-xs font-black tracking-widest text-lime-400 uppercase block mb-1">
-              LIVE STADIUM FEED TRANSMISSION
-            </span>
-                <h2 className="text-xl font-black text-white uppercase mb-3 tracking-tight animate-pulse">
+                  LIVE STADIUM FEED TRANSMISSION
+                </span>
+
+                <h2 className="text-xl font-black text-white uppercase mb-4 tracking-tight">
                   🏟️ {loadingMessage}
                 </h2>
 
-                <p className="text-[11px] text-zinc-400 leading-normal font-medium max-w-xs mx-auto">
-                  ⚡ Thank you for your premium order! We are currently securing your exclusive spectator perspective and custom uniform mapping. Standard render takes around 15 seconds. Please hold on!
+                <div className="my-5 p-4 bg-zinc-950 border border-zinc-850 rounded-xl">
+                  <span className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1">
+                    Estimated Render Time
+                  </span>
+                  <span className="text-3xl font-black text-lime-400 tracking-tight animate-pulse">
+                    ⏱️ Max 3 Minutes
+                  </span>
+                  <p className="text-[11px] text-zinc-400 mt-2 font-medium">
+                    Our AI model is compiling high-definition stadium environments, complex jersey shaders, and billboard matrices.
+                  </p>
+                </div>
+
+                <p className="text-[11px] text-zinc-500 leading-relaxed font-medium max-w-xs mx-auto">
+                  ⚡ Order confirmed. Your deep graphics compute has been safely spun up! <br />
+                  <span className="text-lime-400/80">Please do not refresh or close this browser window.</span> You will be automatically redirected to your card once finished.
                 </p>
               </div>
             </div>
