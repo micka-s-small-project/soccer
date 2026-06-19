@@ -31,7 +31,6 @@ export default function Home() {
   const [selectedCountry, setSelectedCountry] = useState<string>("South Korea");
   const [isSdkLoaded, setIsSdkLoaded] = useState<boolean>(false);
 
-  // 🌟 Clean up configuration string for native support emails
   const supportEmail = "edsolarrcnt5@gmail.com";
   const mailtoUrl = `mailto:${supportEmail}?subject=Stadium%20Cam%20Support%20Request&body=Hello%20User!,%0A%0APlease%20describe%20your%20issue.%20If%20this%20is%20regarding%20a%20paid%20transaction,%20please%20paste%20your%20PayPal%20Capture%20ID%20here:%20`;
 
@@ -130,6 +129,7 @@ export default function Home() {
   };
 
   useEffect(() => {
+    // 🌟 If resultPage is active, flush cleanly
     if (resultImage) {
       const container = document.getElementById("paypal-button-container");
       if (container) container.innerHTML = "";
@@ -137,7 +137,6 @@ export default function Home() {
     }
 
     if (!isSdkLoaded || !(window as any).paypal) return;
-    if (!imageSrc) return;
 
     let timerId: NodeJS.Timeout;
 
@@ -148,6 +147,9 @@ export default function Home() {
         timerId = setTimeout(initPaypal, 50);
         return;
       }
+
+      // If it already contains an iframe built by the script, do not re-clear it
+      if (container.children.length > 0) return;
 
       container.innerHTML = "";
 
@@ -223,11 +225,9 @@ export default function Home() {
 
     return () => {
       if (timerId) clearTimeout(timerId);
-      const container = document.getElementById("paypal-button-container");
-      if (container) container.innerHTML = "";
     };
 
-  }, [imageSrc, isSdkLoaded, selectedCountry, resultImage]);
+  }, [isSdkLoaded, selectedCountry, resultImage]); // 🌟 Removed imageSrc from triggers to avoid teardowns
 
   const handleReset = () => {
     setImageSrc(null);
@@ -323,7 +323,6 @@ export default function Home() {
                     🔄 Substitute Player (Start Over)
                   </button>
 
-                  {/* 🌟 Result Page Support Channel Link */}
                   <div className="mt-4 pt-4 border-t border-zinc-800/60 text-center">
                     <p className="text-[11px] text-zinc-500">
                       Problem with your image resolution?{" "}
@@ -371,23 +370,14 @@ export default function Home() {
                     </label>
                 )}
 
-                {imageSrc ? (
-                    !resultImage && (
-                        <div key="paypal-section" className="w-full max-w-lg mt-4 z-10">
-                          <p className="text-xs text-zinc-400 mb-2 font-bold uppercase tracking-widest">
-                            💳 Premium Jumbotron Transmission ($0.99)
-                          </p>
-                          <div id="paypal-button-container" className="w-full min-h-[150px]"/>
-                        </div>
-                    )
-                ) : (
+                {/* Placeholder feedback button that displays ONLY when imageSrc is empty */}
+                {!imageSrc && (
                     <button disabled
                             className="w-full max-w-lg h-14 rounded-xl font-black text-base bg-zinc-800 text-zinc-500 cursor-not-allowed">
                       🚀 UPLOAD PHOTO FIRST TO ACTIVATE CAM
                     </button>
                 )}
 
-                {/* 🌟 Main Page Support Channel Link */}
                 <div className="w-full max-w-lg mt-2 pt-4 border-t border-zinc-800/40 text-center">
                   <p className="text-[11px] text-zinc-500">
                     Payment or transaction issue?{" "}
@@ -398,6 +388,22 @@ export default function Home() {
                 </div>
               </div>
           )}
+
+          {/* 🌟 THE GOLDEN FIX: Leave the wrapper permanently in layout flow.
+              Toggles viewability gracefully via strict visibility and opacity controls. */}
+          <div
+              className={`w-full max-w-lg mt-4 z-10 transition-all duration-300 ${
+                  (imageSrc && !resultImage)
+                      ? "opacity-100 h-auto pointer-events-auto block"
+                      : "opacity-0 h-0 overflow-hidden pointer-events-none hidden"
+              }`}
+          >
+            <p className="text-xs text-zinc-400 mb-2 font-bold uppercase tracking-widest text-center">
+              💳 Premium Jumbotron Transmission ($0.99)
+            </p>
+            <div id="paypal-button-container" className="w-full min-h-[150px]"/>
+          </div>
+
         </main>
         {isGenerating && (
             <div className="fixed inset-0 bg-black/95 backdrop-blur-md flex items-center justify-center z-50 animate-fade-in">
