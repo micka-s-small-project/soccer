@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Script from "next/script";
+import Link from "next/link";
 
 // ⚽ Country mapping data for uniforms/stadiums
 const COUNTRY_TEMPLATES: Record<string, { flag: string; mockJersey: string }> = {
@@ -37,7 +38,6 @@ export default function Home() {
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => e.preventDefault();
   const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => e.preventDefault();
 
-  // 🌟 Enhanced Drop handler with clean event tracking
   const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     const file = e.dataTransfer?.files?.[0];
@@ -52,7 +52,6 @@ export default function Home() {
     }
   };
 
-  // 🌟 Enhanced File Selection handler with clean state verification
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -249,7 +248,6 @@ export default function Home() {
     try {
       const response = await fetch(resultImage);
       const blob = await response.blob();
-
       const localUrl = URL.createObjectURL(blob);
 
       const link = document.createElement('a');
@@ -264,7 +262,6 @@ export default function Home() {
 
     } catch (err) {
       console.error("Direct download failed, falling back to new window:", err);
-      // Safe backup fallback if a CORS block hits the external link fetch
       window.open(resultImage, '_blank');
     }
   };
@@ -302,14 +299,20 @@ export default function Home() {
   };
 
   return (
-      <div className="flex flex-col flex-1 min-h-screen items-center justify-center bg-zinc-950 font-sans text-white relative">
+      /* 🌟 최상단 컨테이너 고친 점:
+         1. 'overflow-y-auto'를 명시해서 콘텐츠가 길어지면 브라우저가 스크롤바를 강제로 만들도록 유도합니다.
+         2. 스크롤 레이아웃에 맞게 'justify-start'와 충분한 상하 내부 패딩('pt-12 pb-16')을 확보했습니다. */
+      <div className="flex flex-col min-h-screen justify-start items-center bg-zinc-950 font-sans text-white relative pt-12 pb-16 px-4 overflow-y-auto">
         <Script
             src={`https://www.paypal.com/sdk/js?client-id=${process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID}`}
             strategy="afterInteractive"
             onLoad={() => setIsSdkLoaded(true)}
         />
+
+        {/* 🌟 메인 영역 고친 점:
+           불필요하게 화면을 꽉 채우던 고정 마진들을 유연한 갭 간격으로 정리했습니다. */}
         <main
-            className="flex w-full max-w-3xl flex-col items-center justify-center py-20 px-8 bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl mt-12"
+            className="flex w-full max-w-3xl flex-col items-center justify-center py-16 px-8 bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl"
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
@@ -393,7 +396,6 @@ export default function Home() {
                       <span className="text-4xl mb-3 group-hover:animate-bounce">⚽</span>
                       <p className="text-lg font-bold text-zinc-100">Be a Soccer Star!</p>
                       <p className="text-sm text-zinc-400 mt-1">Pass (Drop) your photo here or click to substitute player.</p>
-                      {/* 🌟 Hook explicit event handler on update */}
                       <input type="file" accept="image/*" onChange={handleFileInput} hidden />
                     </label>
                 )}
@@ -428,23 +430,36 @@ export default function Home() {
             </p>
             <div id="paypal-button-container" className="w-full min-h-[150px]"/>
           </div>
-
         </main>
+
+        {/* 🌟 푸터 영역 고친 점:
+           'mt-auto w-full max-w-3xl pt-10' 마진 트릭을 추가했습니다.
+           콘텐츠 크기가 작을 땐 브라우저 바닥면에 딱 붙고, 이미지가 들어와 스크롤이 생기면 카드의 하단 흐름을 유연하게 따라갑니다. */}
+        <footer className="mt-auto w-full max-w-3xl flex flex-wrap items-center justify-center gap-x-6 gap-y-2 pt-10 border-t border-zinc-800/60 text-xs text-zinc-500 font-medium text-center">
+          <Link href="/blog" className="hover:text-lime-400 transition-colors">
+            📋 Football Insights (Blog)
+          </Link>
+          <span className="text-zinc-800 hidden sm:inline">|</span>
+          <Link href="/privacy" className="hover:text-lime-400 transition-colors font-bold">
+            🛡️ Privacy Policy
+          </Link>
+          <span className="text-zinc-800 hidden sm:inline">|</span>
+          <Link href="/terms" className="hover:text-lime-400 transition-colors">
+            ⚖️ Terms of Service
+          </Link>
+        </footer>
+
         {isGenerating && (
             <div className="fixed inset-0 bg-black/95 backdrop-blur-md flex items-center justify-center z-50 animate-fade-in">
               <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8 max-w-md w-full mx-4 text-center shadow-2xl relative overflow-hidden">
                 <div className="absolute top-0 left-0 h-1.5 bg-lime-400 w-full animate-pulse" />
-
                 <div className="w-16 h-16 border-4 border-t-lime-400 border-zinc-700 rounded-full animate-spin mx-auto mb-5"></div>
-
                 <span className="text-xs font-black tracking-widest text-lime-400 uppercase block mb-1">
                   LIVE STADIUM FEED TRANSMISSION
                 </span>
-
                 <h2 className="text-xl font-black text-white uppercase mb-4 tracking-tight">
                   🏟️ {loadingMessage}
                 </h2>
-
                 <div className="my-5 p-4 bg-zinc-950 border border-zinc-850 rounded-xl">
                   <span className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1">
                     Estimated Render Time
@@ -456,7 +471,6 @@ export default function Home() {
                     Our AI model is compiling high-definition stadium environments, complex jersey shaders, and billboard matrices.
                   </p>
                 </div>
-
                 <p className="text-[11px] text-zinc-500 leading-relaxed font-medium max-w-xs mx-auto">
                   ⚡ Order confirmed. Your deep graphics compute has been safely spun up! <br />
                   <span className="text-lime-400/80">Please do not refresh or close this browser window.</span> You will be automatically redirected to your card once finished.

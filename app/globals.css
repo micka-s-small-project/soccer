@@ -19,8 +19,9 @@
   }
 }
 
+/* 🌟 FIXED: 하드코딩된 Arial 폰트를 걷어내고 Next.js Geist 폰트 템플릿과 정렬이 연동되게 만듭니다. */
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), sans-serif;
 }
