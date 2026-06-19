@@ -31,6 +31,10 @@ export default function Home() {
   const [selectedCountry, setSelectedCountry] = useState<string>("South Korea");
   const [isSdkLoaded, setIsSdkLoaded] = useState<boolean>(false);
 
+  // 🌟 Clean up configuration string for native support emails
+  const supportEmail = "edsolarrcnt5@gmail.com";
+  const mailtoUrl = `mailto:${supportEmail}?subject=Stadium%20Cam%20Support%20Request&body=Hello%20User!,%0A%0APlease%20describe%20your%20issue.%20If%20this%20is%20regarding%20a%20paid%20transaction,%20please%20paste%20your%20PayPal%20Capture%20ID%20here:%20`;
+
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => e.preventDefault();
   const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => e.preventDefault();
 
@@ -126,7 +130,6 @@ export default function Home() {
   };
 
   useEffect(() => {
-    // 🌟 Fix 1: If resultImage is active, immediately flush the wrapper clear and terminate
     if (resultImage) {
       const container = document.getElementById("paypal-button-container");
       if (container) container.innerHTML = "";
@@ -274,7 +277,7 @@ export default function Home() {
   return (
       <div className="flex flex-col flex-1 min-h-screen items-center justify-center bg-zinc-950 font-sans text-white relative">
         <Script
-            src="https://www.paypal.com/sdk/js?client-id=${process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID}"
+            src={`https://www.paypal.com/sdk/js?client-id=${process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID}`}
             strategy="afterInteractive"
             onLoad={() => setIsSdkLoaded(true)}
         />
@@ -319,6 +322,16 @@ export default function Home() {
                   <button onClick={handleReset} className="w-full mt-4 h-11 bg-transparent border border-zinc-800 rounded-xl font-bold text-xs text-zinc-500 hover:text-zinc-300 hover:border-zinc-600 transition-all">
                     🔄 Substitute Player (Start Over)
                   </button>
+
+                  {/* 🌟 Result Page Support Channel Link */}
+                  <div className="mt-4 pt-4 border-t border-zinc-800/60 text-center">
+                    <p className="text-[11px] text-zinc-500">
+                      Problem with your image resolution?{" "}
+                      <a href={mailtoUrl} className="text-lime-400 hover:underline transition-all">
+                        Contact Developer Support
+                      </a>
+                    </p>
+                  </div>
                 </div>
               </div>
           ) : (
@@ -359,7 +372,6 @@ export default function Home() {
                 )}
 
                 {imageSrc ? (
-                    /* 🌟 Fix 2: Wrap this node with an explicit unique key and logical block protection */
                     !resultImage && (
                         <div key="paypal-section" className="w-full max-w-lg mt-4 z-10">
                           <p className="text-xs text-zinc-400 mb-2 font-bold uppercase tracking-widest">
@@ -374,6 +386,16 @@ export default function Home() {
                       🚀 UPLOAD PHOTO FIRST TO ACTIVATE CAM
                     </button>
                 )}
+
+                {/* 🌟 Main Page Support Channel Link */}
+                <div className="w-full max-w-lg mt-2 pt-4 border-t border-zinc-800/40 text-center">
+                  <p className="text-[11px] text-zinc-500">
+                    Payment or transaction issue?{" "}
+                    <a href={mailtoUrl} className="text-zinc-400 hover:text-lime-400 hover:underline transition-all font-medium">
+                      Email Support Agent
+                    </a>
+                  </p>
+                </div>
               </div>
           )}
         </main>
