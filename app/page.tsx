@@ -246,23 +246,30 @@ export default function Home() {
     if (!resultImage) return;
 
     try {
-      const response = await fetch(resultImage);
+      // 1. Point to your local API proxy route instead of the raw external URL
+      const proxyUrl = `/api/download?url=${encodeURIComponent(resultImage)}`;
+      const response = await fetch(proxyUrl);
+
+      if (!response.ok) throw new Error("Proxy download failed");
+
       const blob = await response.blob();
       const localUrl = URL.createObjectURL(blob);
 
       const link = document.createElement('a');
       link.href = localUrl;
-      link.download = `stadium_${selectedCountry.toLowerCase().replace(" ", "_")}.png`;
+      link.download = `stadium_${selectedCountry.toLowerCase().replace(/\s+/g, "_")}.png`;
 
       document.body.appendChild(link);
       link.click();
 
+      // Clean up
       document.body.removeChild(link);
       URL.revokeObjectURL(localUrl);
 
     } catch (err) {
-      console.error("Direct download failed, falling back to new window:", err);
-      window.open(resultImage, '_blank');
+      console.error("Download failed, falling back to new window:", err);
+      // Fallback: Opens the image link safely in a new tab if everything else breaks
+      window.open(resultImage, '_blank', 'noopener,noreferrer');
     }
   };
 
