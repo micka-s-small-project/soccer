@@ -305,9 +305,6 @@ export default function Home() {
   };
 
   return (
-      /* 🌟 최상단 컨테이너 고친 점:
-         1. 'overflow-y-auto'를 명시해서 콘텐츠가 길어지면 브라우저가 스크롤바를 강제로 만들도록 유도합니다.
-         2. 스크롤 레이아웃에 맞게 'justify-start'와 충분한 상하 내부 패딩('pt-12 pb-16')을 확보했습니다. */
       <div className="flex flex-col min-h-screen justify-start items-center bg-zinc-950 font-sans text-white relative pt-12 pb-16 px-4 overflow-y-auto">
         <Script
             src={`https://www.paypal.com/sdk/js?client-id=${process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID}`}
@@ -315,8 +312,6 @@ export default function Home() {
             onLoad={() => setIsSdkLoaded(true)}
         />
 
-        {/* 🌟 메인 영역 고친 점:
-           불필요하게 화면을 꽉 채우던 고정 마진들을 유연한 갭 간격으로 정리했습니다. */}
         <main
             className="flex w-full max-w-3xl flex-col items-center justify-center py-16 px-8 bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl"
             onDragOver={handleDragOver}
@@ -438,9 +433,6 @@ export default function Home() {
           </div>
         </main>
 
-        {/* 🌟 푸터 영역 고친 점:
-           'mt-auto w-full max-w-3xl pt-10' 마진 트릭을 추가했습니다.
-           콘텐츠 크기가 작을 땐 브라우저 바닥면에 딱 붙고, 이미지가 들어와 스크롤이 생기면 카드의 하단 흐름을 유연하게 따라갑니다. */}
         <footer className="mt-auto w-full max-w-3xl flex flex-wrap items-center justify-center gap-x-6 gap-y-2 pt-10 border-t border-zinc-800/60 text-xs text-zinc-500 font-medium text-center">
           <Link href="/blog" className="hover:text-lime-400 transition-colors">
             📋 Football Insights (Blog)

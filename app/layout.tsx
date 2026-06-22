@@ -22,9 +22,9 @@ export const metadata = {
   },
 
   verification: {
-    google: "YOUR_GOOGLE_VERIFICATION_CODE", // From Google Search Console
+    google: "7c32BZjEU4U7RC2Gze3ZJ03scOcVKqdumOMju_KGMuw",
     other: {
-      "naver-site-verification": "YOUR_NAVER_VERIFICATION_CODE", // From Naver Search Advisor
+      "naver-site-verification": "50358dc7510c13c224b2041e18b2b83774b06ce1",
     },
   },
 
