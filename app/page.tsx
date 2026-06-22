@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Script from "next/script";
 import Link from "next/link";
 
@@ -9,7 +9,7 @@ const COUNTRY_TEMPLATES: Record<string, { flag: string; mockJersey: string }> = 
   "Brazil": { flag: "🇧🇷", mockJersey: "https://images.unsplash.com/photo-1560241723-d343467b7f14?w=800&q=80" },
   "Argentina": { flag: "🇦🇷", mockJersey: "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=800&q=80" },
   "France": { flag: "🇫🇷", mockJersey: "https://images.unsplash.com/photo-1431324155629-1a6aea185f5a?w=800&q=80" },
-  "United Kingdom": { flag: "🏴%F0%9F%8F%B4%F0%9F%8F%A7%F0%9F%8F%A2%F0%9F%8F%A7%F0%9F%8F%B7", mockJersey: "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=800&q=80" },
+  "United Kingdom": { flag: "🏴", mockJersey: "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=800&q=80" },
   "Germany": { flag: "🇩🇪", mockJersey: "https://images.unsplash.com/photo-1551958219-acbc608c6377?w=800&q=80" },
   "Spain": { flag: "🇪🇸", mockJersey: "https://images.unsplash.com/photo-1579952365111-3a479aa57a72?w=800&q=80" },
   "Japan": { flag: "🇯🇵", mockJersey: "https://images.unsplash.com/photo-1599151485067-a4994228c11e?w=800&q=80" },
@@ -30,12 +30,14 @@ export default function Home() {
   const [resultImage, setResultImage] = useState<string | null>(null);
   const [selectedCountry, setSelectedCountry] = useState<string>("South Korea");
   const [isSdkLoaded, setIsSdkLoaded] = useState<boolean>(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const supportEmail = "edsolarrcnt5@gmail.com";
   const mailtoUrl = `mailto:${supportEmail}?subject=Stadium%20Cam%20Support%20Request&body=Hello%20User!,%0A%0APlease%20describe%20your%20issue.%20If%20this%20is%20regarding%20a%20paid%20transaction,%20please%20paste%20your%20PayPal%20Capture%20ID%20here:%20`;
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => e.preventDefault();
   const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => e.preventDefault();
+
 
   const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -393,12 +395,19 @@ export default function Home() {
                       </button>
                     </div>
                 ) : (
-                    <label className="flex flex-col items-center justify-center w-full max-w-lg p-12 bg-zinc-850 border-2 border-dashed border-lime-400/40 rounded-xl cursor-pointer hover:bg-zinc-800 hover:border-lime-400 transition-all group">
+                    <div
+                        onClick={() => fileInputRef.current?.click()}
+                        className="flex flex-col items-center justify-center w-full max-w-lg p-12 bg-zinc-850 border-2 border-dashed border-lime-400/40 rounded-xl cursor-pointer hover:bg-zinc-800 hover:border-lime-400 transition-all group">
                       <span className="text-4xl mb-3 group-hover:animate-bounce">⚽</span>
                       <p className="text-lg font-bold text-zinc-100">Be a Soccer Star!</p>
                       <p className="text-sm text-zinc-400 mt-1">Pass (Drop) your photo here or click to substitute player.</p>
-                      <input type="file" accept="image/*" onChange={handleFileInput} hidden />
-                    </label>
+                      <input
+                          ref={fileInputRef}
+                          type="file"
+                          accept="image/*"
+                          onChange={handleFileInput}
+                          hidden />
+                    </div>
                 )}
 
                 {!imageSrc && (
