@@ -80,7 +80,7 @@ Captured with a telephoto sports lens look, showcasing slight broadcast zoom com
     console.log(`🚀 [Backend] Triggering official openai/gpt-image-2 endpoint...`);
 
     // 3. 🔥 [핵심 고친 점] 공식 curl 사양에 맞춰 수정한 직접 호출 파이프라인
-    const replicateResponse = await fetch("https://api.replicate.com/v1/models/openai/gpt-image-2/predictionsTT", {
+    const replicateResponse = await fetch("https://api.replicate.com/v1/models/openai/gpt-image-2/predictions", {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${process.env.REPLICATE_API_TOKEN}`,

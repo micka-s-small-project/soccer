@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 async function getPaypalAccessToken() {
   const clientId = process.env.PAYPAL_CLIENT_ID;
-  const secretKey = process.env.PAYPAL_SECRET_KEY;
+  const secretKey = process.env.PAYPAL_SECRET;
 
   const auth = Buffer.from(`${clientId}:${secretKey}`).toString("base64");
 
@@ -22,7 +22,6 @@ async function getPaypalAccessToken() {
 export async function POST(request: Request) {
   try {
     const { country } = await request.json();
-    const apiUrl = process.env.PAYPAL_API_URL;
     const price = process.env.PRICE || "0.99"; // 환경변수에서 금액 로드
 
     const accessToken = await getPaypalAccessToken();
@@ -51,16 +50,18 @@ export async function POST(request: Request) {
 
     if (!response.ok) {
       const errorData = await response.json();
-      console.error("PayPal API Error:", errorData);
-      return NextResponse.json({ error: "PayPal order creation failed" }, { status: 500 });
+      console.error("PayPal API Error Details:", errorData);
+      return NextResponse.json(
+          { error: "PayPal rejected order creation", detail: errorData },
+          { status: response.status } // 500으로 고정하지 않고 페이팔이 준 실제 상태코드(예: 400, 401 등)를 그대로 전달
+      );
     }
 
     const order = await response.json();
-
     return NextResponse.json({ id: order.id });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error("Create Order Error:", error);
-    return NextResponse.json({ error: "Failed to create order" }, { status: 500 });
+    return NextResponse.json({ error: "Failed to create order", message: error.message }, { status: 500 });
   }
 }
