@@ -169,18 +169,15 @@ export default function Home() {
           shape: "rect",
           label: "pay",
         },
-        createOrder: (data: any, actions: any) => {
-          return actions.order.create({
-            purchase_units: [
-              {
-                description: `AI Stadium Cam - ${selectedCountry} Edition`,
-                amount: {
-                  currency_code: "USD",
-                  value: "0.99",
-                },
-              },
-            ],
+        createOrder: async (data: any, actions: any) => {
+          const response = await fetch("/api/paypal/create-order", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ country: selectedCountry })
           });
+
+          const order = await response.json();
+          return order.id; // 서버가 발급해 준 안전한 주문 ID 리턴
         },
 
         onApprove: async (data: any, actions: any) => {

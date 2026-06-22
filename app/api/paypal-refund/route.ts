@@ -6,7 +6,7 @@ export async function POST(request: Request) {
 
     // 1. PayPal Access Token 발급 받기 (Client ID와 Secret 필요)
     const auth = Buffer.from(`${process.env.PAYPAL_CLIENT_ID}:${process.env.PAYPAL_SECRET}`).toString("base64");
-    const tokenRes = await fetch("https://api-m.sandbox.paypal.com/v1/oauth2/token", { // 운영계는 api-m.paypal.com
+    const tokenRes = await fetch("https://api-m.paypal.com/v1/oauth2/token", { // 운영계는 api-m.paypal.com
       method: "POST",
       headers: {
         Authorization: `Basic ${auth}`,
@@ -16,7 +16,7 @@ export async function POST(request: Request) {
     });
     const { access_token } = await tokenRes.json();
 
-    const refundRes = await fetch(`https://api-m.sandbox.paypal.com/v2/payments/captures/${captureId}/refund`, {
+    const refundRes = await fetch(`https://api-m.paypal.com/v2/payments/captures/${captureId}/refund`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${access_token}`,
