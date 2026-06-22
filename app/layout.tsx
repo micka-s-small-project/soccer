@@ -22,8 +22,8 @@ export const metadata = {
   },
 
   verification: {
-    google: "7c32BZjEU4U7RC2Gze3ZJ03scOcVKqdumOMju_KGMuw",
     other: {
+      "google-site-verification": "7c32BZjEU4U7RC2Gze3ZJ03scOcVKqdumOMju_KGMuw",
       "naver-site-verification": "50358dc7510c13c224b2041e18b2b83774b06ce1",
     },
   },
