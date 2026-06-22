@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import Script from "next/script";
 import Link from "next/link";
 
-// ⚽ Country mapping data for uniforms/stadiums
 const COUNTRY_TEMPLATES: Record<string, { flag: string; mockJersey: string }> = {
   "South Korea": { flag: "🇰🇷", mockJersey: "https://images.unsplash.com/photo-1518098268272-e99c43a406b2?w=800&q=80" },
   "Brazil": { flag: "🇧🇷", mockJersey: "https://images.unsplash.com/photo-1560241723-d343467b7f14?w=800&q=80" },

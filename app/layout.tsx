@@ -1,5 +1,6 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { Analytics } from "@vercel/analytics/react";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -12,19 +13,32 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
+  metadataBase: new URL("https://micka-lab.com"), // 🌟 Put your actual domain here!
   title: "Micka-Lab | Football Insights & Jumbotron Simulator",
   description: "Explore deep football stories, jersey evolution, sports science, and interactive jumbotron live simulations at Micka-Lab.",
   keywords: ["Football", "Jumbotron", "Soccer Simulator", "Football Insights", "Sports Science"],
   icons: {
     icon: "/icon.png",
   },
+
+  verification: {
+    google: "YOUR_GOOGLE_VERIFICATION_CODE", // From Google Search Console
+    other: {
+      "naver-site-verification": "YOUR_NAVER_VERIFICATION_CODE", // From Naver Search Advisor
+    },
+  },
+
+  openGraph: {
+    title: "Micka-Lab | Football Insights & Jumbotron Simulator",
+    description: "Explore deep football stories, jersey evolution, sports science, and interactive jumbotron live simulations.",
+    url: "https://micka-lab.com",
+    siteName: "Micka-Lab",
+    locale: "en_US",
+    type: "website",
+  },
 };
 
-export default function RootLayout({
-                                     children,
-                                   }: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
       <html lang="en">
       <head>
@@ -34,9 +48,9 @@ export default function RootLayout({
             crossOrigin="anonymous"
         ></script>
       </head>
-      {/* 🌟 FIXED: body에 min-h-screen과 flex-col을 주어 전체 문서 스크롤이 무조건 터지도록 보장합니다. */}
       <body className={`${geistSans.variable} ${geistMono.variable} min-h-screen flex flex-col antialiased`}>
       {children}
+      <Analytics />
       </body>
       </html>
   );
