@@ -16,7 +16,7 @@ export const metadata = {
   metadataBase: new URL("https://micka-lab.com"), // 🌟 Put your actual domain here!
   title: "Micka-Lab | Football Insights & Jumbotron Simulator",
   description: "Explore deep football stories, jersey evolution, sports science, and interactive jumbotron live simulations at Micka-Lab.",
-  keywords: ["Football", "Jumbotron", "Soccer Simulator", "Football Insights", "Sports Science"],
+  keywords: ["Football", "Jumbotron", "Soccer Simulator", "Football Insights", "Sports Science", "Soccer AI", "World cup"],
   icons: {
     icon: "/icon.png",
   },
