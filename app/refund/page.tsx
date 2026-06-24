@@ -29,7 +29,7 @@ export default function RefundPolicy() {
             <section>
               <h2 className="text-lg font-bold text-white mb-2">3. How to Request a Review</h2>
               <p>
-                If you believe your situation qualifies for an exception, please submit a support request within fourteen (14) days of your purchase. Because our orders are processed through Paddle, our online reseller and Merchant of Record, you can also contact Paddle Customer Support directly to resolve billing disputes or file a formal refund inquiry.
+                If you believe your situation qualifies for an exception, please submit a support request within fourteen (14) days of your purchase. Because our orders are processed through paypal, our online reseller and Merchant of Record, you can also contact Paddle Customer Support directly to resolve billing disputes or file a formal refund inquiry.
               </p>
             </section>
 
