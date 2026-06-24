@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import Script from "next/script";
 import Link from "next/link";
 
@@ -450,6 +450,14 @@ export default function Home() {
           <span className="text-zinc-800 hidden sm:inline">|</span>
           <Link href="/terms" className="hover:text-lime-400 transition-colors">
             ⚖️ Terms of Service
+          </Link>
+          <span className="text-zinc-800 hidden sm:inline">|</span>
+          <Link href="/pricing" className="hover:text-lime-400 transition-colors">
+            💸 Pricing
+          </Link>
+          <span className="text-zinc-800 hidden sm:inline">|</span>
+          <Link href="/refund" className="hover:text-lime-400 transition-colors">
+            💰 Refund Policy
           </Link>
         </footer>
 
